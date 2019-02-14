@@ -18,12 +18,15 @@ else {
 
   $mysqli = new mysqli('localhost',$_GET["user"],$_GET["secretkey"],'API');
   if ($mysqli->connect_errno) {
+      echo $mysqli->connect_errno . "\n";
       echo "You do not have access to the database." . "\n";
       exit;
   }
 
   $sql = "INSERT INTO " . $_GET["table"] . " (" . $columns . ") VALUES (" . $values_statement . ");";
+
   if (!$result = $mysqli->query($sql)) {
+      echo mysqli_error($mysqli);
       echo "Query failed\n";
       exit;
   }
