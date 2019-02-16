@@ -1,5 +1,6 @@
 <?php
-error_reporting(0);
+    error_reporting(0);
+    ini_set('display_errors', 0); // Do not display errors
 $user = filter_var($_GET["user"]);
 $secret_key = filter_var($_GET["secretkey"]);
 $table = filter_var($_GET["table"]);

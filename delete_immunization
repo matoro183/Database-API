@@ -1,0 +1,5 @@
+/*
+PU needs to be able to delete an immunization that was incorrectly inserted into the database. The API should delete the connection between the immunization and all puppies, then delete the immunization.
+
+localhost/delete_immunizations.php?user=[user]&secretkey=[secretkey]&immunization=[immunizationname]
+*/

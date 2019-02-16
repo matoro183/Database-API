@@ -23,10 +23,10 @@ else {
       exit;
   }
 
-  $sql = "INSERT INTO " . $_GET["table"] . " (" . $columns . ") VALUES (" . $values_statement . ");";
-
+  $sql = "INSERT INTO " . $_GET["table"] . " (" . $columns . ") VALUES (" . $valu . ");";
+  //echo $sql . "\n";
   if (!$result = $mysqli->query($sql)) {
-      echo mysqli_error($mysqli);
+  //    echo mysqli_error($mysqli);
       echo "Query failed\n";
       exit;
   }
