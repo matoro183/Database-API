@@ -9,7 +9,7 @@
       echo "You do not have access to the database." . "\n";
       exit;
   }
-  $sql = "SELECT Customers.name AS Name FROM Customers INNER JOIN Purchases ON Customers.customer_ID = Purchases.customer_ID GROUP BY Customers.customer_ID HAVING COUNT(Purchases.customer_ID) >= 5";
+  $sql = "SELECT customer.customer_name AS customer_name FROM customer INNER JOIN adoption ON customer.id = adoption.customer_id GROUP BY customer.id HAVING COUNT(adoption.customer_id) >= 5;";
 
   $result=mysqli_query($mysqli,$sql);
   while($row = mysqli_fetch_assoc($result)){

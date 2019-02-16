@@ -9,8 +9,8 @@ $mysqli = new mysqli('localhost',$_GET["user"],$_GET["secretkey"],'API');// Conn
       echo "You do not have access to the database." . "\n";
       exit;
   }
-  $sql = "SELECT breed AS breed_name, COUNT(Puppies.puppy_ID) AS numpups FROM Puppies LEFT JOIN Purchases ON Puppies.puppy_ID = Purchases.puppy_ID WHERE Purchases.puppy_ID IS NULL GROUP BY Puppies.breed ORDER BY Puppies.breed;";
-
+  $sql = "SELECT breed_name, COUNT(puppy_id) AS numpups from puppy_breed, breed where puppy_id NOT IN (SELECT puppy_id from adoption) AND breed.id = puppy_breed.breed_id GROUP BY breed_id;";
+//echo $sql;
   $result=mysqli_query($mysqli,$sql);
   while($row = mysqli_fetch_assoc($result)){
     $test[] = $row;
