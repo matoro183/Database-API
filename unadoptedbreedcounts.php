@@ -15,7 +15,7 @@ $mysqli = new mysqli('localhost',$_GET["user"],$_GET["secretkey"],'API');// Conn
   while($row = mysqli_fetch_assoc($result)){
     $test[] = $row;
   }
-  $JSON = json_encode($test);
+  $JSON = json_encode($test, JSON_NUMERIC_CHECK);
   header("Content-Type: application/json; charset=UTF-8");
   echo $JSON;
   mysqli_free_result($result);

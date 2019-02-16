@@ -9,13 +9,13 @@
       echo "You do not have access to the database." . "\n";
       exit;
   }
-  $sql = "SELECT customer.customer_name, COUNT(adoption.puppy_ID) AS numpups FROM adoption INNER JOIN customer ON adoption.customer_ID = customer.id GROUP BY customer.customer_name ORDER BY customer.customer_name;";
+  $sql = "SELECT customer.customer_name, COUNT(adoption.puppy_ID) AS numpups FROM customer LEFT JOIN adoption ON adoption.customer_ID = customer.id GROUP BY customer.customer_name;";
 
   $result=mysqli_query($mysqli,$sql);
   while($row = mysqli_fetch_assoc($result)){
     $test[] = $row;
   }
-  $JSON = json_encode($test);
+  $JSON = json_encode($test, JSON_NUMERIC_CHECK);
   header("Content-Type: application/json; charset=UTF-8");
   echo $JSON;
   mysqli_free_result($result);
