@@ -9,7 +9,7 @@
       echo "You do not have access to the database." . "\n";
       exit;
   }
-  $sql = "SELECT puppy_name, age FROM puppy WHERE record_ID IS NULL;";
+  $sql = "SELECT puppy_name, age FROM puppy WHERE id NOT IN (SELECT puppy_id from puppy_immunization);";
 
   $result=mysqli_query($mysqli,$sql);
   while($row = mysqli_fetch_assoc($result)){
