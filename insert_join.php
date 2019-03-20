@@ -1,62 +1,94 @@
 <?php
-error_reporting(0);
-$user = filter_var($_GET["user"]);
-$secret_key = filter_var($_GET["secretkey"]);
-$table = filter_var($_GET["table"]);
-$columns = filter_var($_GET["columns"]);
-$values = filter_var($_GET["values"]);
-$fktables = filter_var($_GET["fktables"]);
-$fkcolumns = filter_var($_GET["fkcolumns"]);
-$table_array = explode(",", $table);
-$columns_array = explode(",", $columns);
-$values_array = explode(",", $values);
-$fktables_array = explode(",", $fktables);
-$fkcolumns_array = explode(",", $fkcolumns);
+$employeeName = $_GET["user"];
+$secretKey = $_GET["secretkey"];
+$table = $_GET["table"];
+$columns = $_GET["columns"];
+$values = $_GET["values"];
+$fktables = $_GET["fktables"];
+$fkcolumns = $_GET["fkcolumns"];
 
+$expectedEmployeeKey = '123654';
+$expectedAdminKey = '321456';
 
-if ($user == NULL || $secret_key == NULL || $table == NULL || $columns == NULL || $values == NULL)
-{
-  echo "Some of the required information is missing. Fill out the required information and try again.";
+$servername = "localhost";
+$usernameEmployee = "employee";
+$usernameAdmin = "employeeadmin";
+$databasename = "API"; //db name
+
+//check to make sure the data needed is set in the URL string
+if(!isset($_GET["user"]) || !isset($_GET["secretkey"]) || !isset($_GET["table"]) || !isset($_GET["columns"]) ||
+   !isset($_GET["values"]) || !isset($_GET["fktables"]) || !isset($_GET["fkcolumns"])){
+  exit("Incomplete information entered.");
 }
-else {
 
-  $mysqli = new mysqli('localhost',$_GET["user"],$_GET["secretkey"],'API');
-  if ($mysqli->connect_errno) {
-      echo $mysqli->connect_errno . "\n";
-      echo "You do not have access to the database." . "\n";
-      exit;
+if((($employeeName == $usernameEmployee) && ($secretKey == $expectedEmployeeKey)) ||
+  (($employeeName == $usernameAdmin) && ($secretKey == $expectedAdminKey))) {
+  //you are an employee so you can insert
+
+  $conn = new mysqli($servername, $employeeName, $secretKey, $databasename);
+  //Check connection
+  if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
   }
 
-  $sql = "SELECT id FROM " . $fktables_array[0] . " WHERE " . $fkcolumns_array[0] . " = " . $values_array[0] . ";";
-  echo $sql . "\n";
-  $result=mysqli_query($mysqli,$sql); 
-  $row = mysqli_fetch_assoc($result);
-  
-  $sql2 = "SELECT id FROM " . $fktables_array[1] . " WHERE " . $fkcolumns_array[1] . " = " . $values_array[1] . ";";
-  echo $sql2 . "\n";
-  $result2=mysqli_query($mysqli,$sql2); 
-  $row2 = mysqli_fetch_assoc($result2);
+  //clean the tables, columns and values
+  $cleanTable = filter_var($table, FILTER_SANITIZE_STRING);
+  $cleanColumns = filter_var($columns, FILTER_SANITIZE_STRING);
+  $cleanValues = filter_var($values, FILTER_SANITIZE_STRING);
+  $clean_fktables = filter_var($fktables, FILTER_SANITIZE_STRING);
+  $clean_fkcolumns = filter_var($fkcolumns, FILTER_SANITIZE_STRING);
 
-  if (sizeof($columns_array) == 3) 
-  {
+  //Justins code to change things to question marks
+  $revisedValues = str_replace("%20"," ",$cleanValues);
+  $revisedValues = preg_replace("!&#39;%?[a-zA-Z0-9 \.\-@]+%?&#39;!","*",$revisedValues);
+  $conditions_array = preg_match_all("!&#39;(%?[a-zA-Z0-9 \.\-@]+%?)&#39;!", $cleanValues, $condition_matches, PREG_PATTERN_ORDER);
 
-    $sql4 = "INSERT INTO " . $table . " (" . $columns_array[0] . ", " . $columns_array[1] . ", " . $columns_array[2] . ") VALUES ('" . $row["id"] . "', '" . $row2["id"] . "', " . $values_array[2] . ");";
-    echo $sql4 . "\n";
-    if (!$result4 = $mysqli->query($sql4)) {
-      //    echo mysqli_error($mysqli);
-          echo "Query failed\n";
-          exit;
-      }
-  }
-  else {
 
-  $sql3 = "INSERT INTO " . $table . " (" . $columns_array[0] . ", " . $columns_array[1] . ") VALUES ('" . $row["id"] . "', '" . $row2["id"] . "');";
-  echo $sql3 . "\n";
-  if (!$result3 = $mysqli->query($sql3)) {
-    //    echo mysqli_error($mysqli);
-        echo "Query failed\n";
-        exit;
+$subqueries = array();
+if ($clean_fktables != False) {
+    $fktables_array = explode(",",$clean_fktables);
+    $fkcolumns_array = explode(",",$clean_fkcolumns);
+    for ($i = 0; $i < count($fktables_array); $i++) {
+      $fktable = $fktables_array[$i];
+      $fkcolumn = $fkcolumns_array[$i];
+      $subquery = "(SELECT id FROM $fktable WHERE $fkcolumn = ?)";
+      $subqueries[] = $subquery;
+    }
+}
+//print_r($subqueries);
+
+for ($i = 0; $i < count($subqueries); $i++) {
+  $subquery = $subqueries[$i];
+  $revisedValues = preg_replace('#\*#',$subquery,$revisedValues,1);
+}
+$revisedValues = str_replace('*', '?', $revisedValues);
+
+//run the query
+$query_sql = "INSERT INTO $cleanTable (" . $cleanColumns . ") VALUES (" . $revisedValues . ")";
+
+if ($stmt = $conn->prepare($query_sql)) {
+  $types = "";
+  foreach ($condition_matches[1] as $v) {
+    if (preg_match("!^[0-9\.]+$!",$v)) {
+      $types .= "d";
+    } else {
+      $types .= "s";
     }
   }
-}
+  $stmt->bind_param($types, ...$condition_matches[1]);
+  }
+
+  if (!$stmt->execute()) {
+        // it didnt work!
+        exit("SQL statement failed.");
+    }
+
+  $stmt->close();
+  $conn->close();
+
+  }
+  else {
+  exit("Incorrect user name or password entered.");
+  }
+
 ?>
